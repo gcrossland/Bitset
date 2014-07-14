@@ -4,6 +4,7 @@ namespace bitset {
 
 const core::Version VERSION{LIB_MAJ, LIB_MIN}; DEPENDENCIES;
 
+using core::getLowestSetBit;
 using core::string;
 using std::move;
 using std::max;
@@ -58,24 +59,6 @@ bool Bitset::getBit (size_t i) const noexcept {
   size_t bitI = i % BITS;
 
   return isWithinSize(wordI) ? (b[wordI] >> bitI) & 0b1 : 0;
-}
-
-// XXXX to move to core
-// XXXX return is index of first set bit or >=bits if 0
-template<typename _i> iu getLowestSetBit (_i value) noexcept {
-  auto v = static_cast<typename /* XXXX */ std::make_unsigned<_i>::type>(value);
-
-  int r;
-  if (sizeof(v) > sizeof(long long)) {
-    DPRE(false, "_i is too long");
-  } else if (sizeof(v) > sizeof(long)) {
-    r = __builtin_ffsll(static_cast<long long>(v));
-  } else if (sizeof(v) > sizeof(int)) {
-    r = __builtin_ffsl(static_cast<long>(v));
-  } else {
-    r = __builtin_ffs(static_cast<int>(v));
-  }
-  return static_cast<iu>(r) - 1;
 }
 
 template<typename _OutOfRangeResult, typename _ReadOp> size_t Bitset::getNextBit (size_t i, const _OutOfRangeResult &outOfRangeResult, const _ReadOp &readOp) const noexcept {
