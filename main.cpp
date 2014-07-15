@@ -148,6 +148,55 @@ void testBitsets () {
     }
     check(true, exhausted);
   }
+
+  auto checkOr = [] (const Rep &r0, const Rep &r1, const Bitset &res) {
+    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+      check(r0.value[i] | r1.value[i], res.getBit(i));
+    }
+  };
+  auto checkAnd = [] (const Rep &r0, const Rep &r1, const Bitset &res) {
+    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+      check(r0.value[i] & r1.value[i], res.getBit(i));
+    }
+  };
+  for (iu j = 0; j != reps.size(); ++j) {
+    Rep &rep0 = reps[j];
+    Bitset &bitset0 = bitsets[j];
+    for (iu k = 0; k != reps.size(); ++k) {
+      Rep &rep1 = reps[k];
+      Bitset &bitset1 = bitsets[k];
+
+      {
+        Bitset b = bitset0;
+        b |= bitset1;
+        checkOr(rep0, rep1, b);
+      }
+      {
+        Bitset b = bitset0;
+        b |= Bitset(bitset1);
+        checkOr(rep0, rep1, b);
+      }
+      checkOr(rep0, rep1, bitset0 | bitset1);
+      checkOr(rep0, rep1, Bitset(bitset0) | bitset1);
+      checkOr(rep0, rep1, bitset0 | Bitset(bitset1));
+      checkOr(rep0, rep1, Bitset(bitset0) | Bitset(bitset1));
+
+      {
+        Bitset b = bitset0;
+        b &= bitset1;
+        checkAnd(rep0, rep1, b);
+      }
+      {
+        Bitset b = bitset0;
+        b &= Bitset(bitset1);
+        checkAnd(rep0, rep1, b);
+      }
+      checkAnd(rep0, rep1, bitset0 & bitset1);
+      checkAnd(rep0, rep1, Bitset(bitset0) & bitset1);
+      checkAnd(rep0, rep1, bitset0 & Bitset(bitset1));
+      checkAnd(rep0, rep1, Bitset(bitset0) & Bitset(bitset1));
+    }
+  }
 }
 
 /* -----------------------------------------------------------------------------
