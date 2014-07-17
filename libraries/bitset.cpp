@@ -7,7 +7,6 @@ const core::Version VERSION{LIB_MAJ, LIB_MIN}; DEPENDENCIES;
 using core::getLowestSetBit;
 using core::string;
 using std::move;
-using std::max;
 using std::min;
 
 /* -----------------------------------------------------------------------------
@@ -21,30 +20,36 @@ constexpr size_t Bitset::NON_INDEX;
 Bitset::Bitset () {
 }
 
-Bitset::Bitset (size_t capacity) {
-  ensureCapacity(capacity);
+Bitset::Bitset (size_t width) : b((width + (BITS - 1)) / BITS) {
+  ensureWidth(width);
 }
 
-void Bitset::ensureCapacity (size_t capacity) {
-  ensureCapacityImpl(capacity / BITS);
+Bitset::Bitset (size_t size, bool) : b(size) {
+  b.append_any(size);
 }
 
-void Bitset::ensureCapacityImpl (size_t wordI) {
+void Bitset::ensureWidth (size_t width) {
+  if (width != 0) {
+    ensureWidthForWord((width - 1) / BITS);
+  }
+}
+
+void Bitset::ensureWidthForWord (size_t wordI) {
   size_t bSize = b.size();
   if (wordI >= bSize) {
     b.append(wordI + 1 - bSize, 0);
   }
 }
 
-bool Bitset::isWithinCapacity (size_t wordI) const noexcept {
+bool Bitset::wordIsWithinWidth (size_t wordI) const noexcept {
   return wordI < b.size();
 }
 
-void Bitset::setCapacitatedBit (size_t i) noexcept {
+void Bitset::setExistingBit (size_t i) noexcept {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  DPRE(isWithinCapacity(wordI));
+  DPRE(wordIsWithinWidth(wordI));
   b[wordI] |= ONE << bitI;
 }
 
@@ -52,15 +57,15 @@ void Bitset::setBit (size_t i) {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  ensureCapacityImpl(wordI);
+  ensureWidthForWord(wordI);
   b[wordI] |= ONE << bitI;
 }
 
-void Bitset::clearCapacitatedBit (size_t i) noexcept {
+void Bitset::clearExistingBit (size_t i) noexcept {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  DPRE(isWithinCapacity(wordI));
+  DPRE(wordIsWithinWidth(wordI));
   b[wordI] &= ~(ONE << bitI);
 }
 
@@ -68,16 +73,16 @@ void Bitset::clearBit (size_t i) {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  if (isWithinCapacity(wordI)) {
+  if (wordIsWithinWidth(wordI)) {
     b[wordI] &= ~(ONE << bitI);
   }
 }
 
-bool Bitset::getCapacitatedBit (size_t i) const noexcept {
+bool Bitset::getExistingBit (size_t i) const noexcept {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  DPRE(isWithinCapacity(wordI));
+  DPRE(wordIsWithinWidth(wordI));
   return (b[wordI] >> bitI) & 0b1;
 }
 
@@ -85,14 +90,14 @@ bool Bitset::getBit (size_t i) const noexcept {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  return isWithinCapacity(wordI) ? (b[wordI] >> bitI) & 0b1 : 0;
+  return wordIsWithinWidth(wordI) ? (b[wordI] >> bitI) & 0b1 : 0;
 }
 
 template<typename _OutOfRangeResult, typename _ReadOp> size_t Bitset::getNextBit (size_t i, const _OutOfRangeResult &outOfRangeResult, const _ReadOp &readOp) const noexcept {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  if (!isWithinCapacity(wordI)) {
+  if (!wordIsWithinWidth(wordI)) {
     return outOfRangeResult(i);
   }
 
@@ -148,53 +153,45 @@ void Bitset::compact () {
   b.shrink_to_fit();
 }
 
-template<typename _MergeOp> size_t Bitset::op (
-  const string<word> &i0, size_t i0Size, const string<word> &i1, size_t i1Size,
+template<typename _MergeOp> void Bitset::op (
+  const string<word> &i0, const string<word> &i1, size_t iSize,
   string<word> &r_o, _MergeOp mergeOp
 ) {
-  size_t end = std::min(i0Size, i1Size);
-  DPRE(r_o.size() >= end, "r_o must have size at least that of the smaller of the inputs");
+  DPRE(r_o.size() >= iSize, "r_o must have size at least that of the smaller of the inputs");
 
-  for (size_t i = 0; i != end; ++i) {
+  for (size_t i = 0; i != iSize; ++i) {
     r_o[i] = mergeOp(i0[i], i1[i]);
   }
-
-  return end;
 }
 
-template<typename _MergeOp, typename _RemainderOp> size_t Bitset::op (
+template<typename _MergeOp, typename _RemainderOp> void Bitset::op (
   const string<word> &i0, size_t i0Size, const string<word> &i1, size_t i1Size,
   string<word> &r_o, _MergeOp mergeOp, _RemainderOp remainderOp
 ) {
-  // TODO these ops are symmetric: just require that the first one is the bigger?
-  bool i0IsBigger = i0Size > i1Size;
-  const string<word> &iR = i0IsBigger ? i0 : i1;
-  size_t end = i0IsBigger ? i0Size : i1Size;
-  DPRE(r_o.size() >= end, "r_o must have size at least that of the bigger of the inputs");
+  DPRE(i0Size >= i1Size);
+  DPRE(r_o.size() >= i0Size, "r_o must have size at least that of the bigger of the inputs");
 
-  size_t i = op(i0, i0Size, i1, i1Size, r_o, mergeOp);
-
-  for (; i != end; ++i) {
-    r_o[i] = remainderOp(iR[i]);
+  op(i0, i1, i1Size, r_o, mergeOp);
+  for (size_t i = i1Size; i != i0Size; ++i) {
+    r_o[i] = remainderOp(i0[i]);
   }
-
-  return end;
 }
 
 void Bitset::orOp (const string<word> &i0, size_t i0Size, const string<word> &i1, size_t i1Size, string<word> &r_o) {
-  size_t end = Bitset::op(i0, i0Size, i1, i1Size, r_o, [] (word v0, word v1) -> word {
+  DPRE(i0Size >= i1Size);
+  DPRE(r_o.size() == i0Size);
+  Bitset::op(i0, i0Size, i1, i1Size, r_o, [] (word v0, word v1) -> word {
     return v0 | v1;
   }, [] (word o) -> word {
     return o;
   });
-  r_o.resize(end);
 }
 
-void Bitset::andOp (const string<word> &i0, size_t i0Size, const string<word> &i1, size_t i1Size, string<word> &r_o) {
-  size_t end = Bitset::op(i0, i0Size, i1, i1Size, r_o, [] (word v0, word v1) -> word {
+void Bitset::andOp (const string<word> &i0, const string<word> &i1, size_t iSize, string<word> &r_o) {
+  DPRE(r_o.size() == iSize);
+  Bitset::op(i0, i1, iSize, r_o, [] (word v0, word v1) -> word {
     return v0 & v1;
   });
-  r_o.resize(end);
 }
 
 Bitset &Bitset::operator|= (Bitset &&r) {
@@ -211,19 +208,16 @@ Bitset operator| (Bitset &&l, Bitset &&r) {
   size_t lSize = l.b.size();
   size_t rSize = r.b.size();
 
-  if (l.b.capacity() >= rSize) {
-    Bitset o(move(l));
-    if (lSize < rSize) {
-      o.b.resize_any(rSize);
-    }
+  if (lSize < rSize) {
+    Bitset o(move(r));
 
-    Bitset::orOp(o.b, lSize, r.b, rSize, o.b);
+    Bitset::orOp(o.b, rSize, l.b, lSize, o.b);
 
     return o;
   } else {
-    Bitset o(move(r));
+    Bitset o(move(l));
 
-    Bitset::orOp(l.b, lSize, o.b, rSize, o.b);
+    Bitset::orOp(o.b, lSize, r.b, rSize, o.b);
 
     return o;
   }
@@ -233,20 +227,28 @@ Bitset operator| (Bitset &&l, const Bitset &r) {
   size_t lSize = l.b.size();
   size_t rSize = r.b.size();
 
-  if (l.b.capacity() >= rSize) {
-    Bitset o(move(l));
-    if (lSize < rSize) {
-      o.b.resize_any(rSize);
-    }
+  if (l.b.capacity() < rSize) {
+    DA(lSize < rSize);
+    Bitset o(rSize, false);
 
-    Bitset::orOp(o.b, lSize, r.b, rSize, o.b);
+    Bitset::orOp(r.b, rSize, l.b, lSize, o.b);
 
     return o;
   } else {
-    Bitset o(rSize);
-    o.b.resize_any(rSize);
+    Bitset o(move(l));
+    const string<Bitset::word> *i0 = &o.b;
+    size_t i0Size = lSize;
+    const string<Bitset::word> *i1 = &r.b;
+    size_t i1Size = rSize;
+    if (lSize < rSize) {
+      i0 = &r.b;
+      i0Size = rSize;
+      i1 = &o.b;
+      i1Size = lSize;
+      o.b.append_any(rSize - lSize);
+    }
 
-    Bitset::orOp(l.b, lSize, r.b, rSize, o.b);
+    Bitset::orOp(*i0, i0Size, *i1, i1Size, o.b);
 
     return o;
   }
@@ -259,12 +261,20 @@ Bitset operator| (const Bitset &l, Bitset &&r) {
 Bitset operator| (const Bitset &l, const Bitset &r) {
   size_t lSize = l.b.size();
   size_t rSize = r.b.size();
-  size_t oSize = max(lSize, rSize);
 
-  Bitset o(oSize);
-  o.b.resize_any(oSize);
+  const string<Bitset::word> *i0 = &l.b;
+  size_t i0Size = lSize;
+  const string<Bitset::word> *i1 = &r.b;
+  size_t i1Size = rSize;
+  if (lSize < rSize) {
+    i0 = &r.b;
+    i0Size = rSize;
+    i1 = &l.b;
+    i1Size = lSize;
+  }
+  Bitset o(i0Size, false);
 
-  Bitset::orOp(l.b, lSize, r.b, rSize, o.b);
+  Bitset::orOp(*i0, i0Size, *i1, i1Size, o.b);
 
   return o;
 }
@@ -288,8 +298,15 @@ Bitset operator& (Bitset &&l, const Bitset &r) {
   size_t rSize = r.b.size();
 
   Bitset o(move(l));
+  size_t oSize;
+  if (lSize < rSize) {
+    oSize = lSize;
+  } else {
+    oSize = rSize;
+    o.b.resize_any(oSize);
+  }
 
-  Bitset::andOp(o.b, lSize, r.b, rSize, o.b);
+  Bitset::andOp(o.b, r.b, oSize, o.b);
 
   return o;
 }
@@ -301,12 +318,11 @@ Bitset operator& (const Bitset &l, Bitset &&r) {
 Bitset operator& (const Bitset &l, const Bitset &r) {
   size_t lSize = l.b.size();
   size_t rSize = r.b.size();
+
   size_t oSize = min(lSize, rSize);
+  Bitset o(oSize, false);
 
-  Bitset o(oSize);
-  o.b.resize_any(oSize);
-
-  Bitset::andOp(l.b, lSize, r.b, rSize, o.b);
+  Bitset::andOp(l.b, r.b, oSize, o.b);
 
   return o;
 }

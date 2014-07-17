@@ -25,36 +25,37 @@ class Bitset {
   prv core::string<word> b;
 
   pub Bitset ();
-  pub Bitset (size_t capacity);
+  pub explicit Bitset (size_t width);
+  prv Bitset (size_t size, bool);
   pub Bitset (const Bitset &) = default;
   pub Bitset &operator= (const Bitset &) = default;
   pub Bitset (Bitset &&) = default;
   pub Bitset &operator= (Bitset &&) = default;
 
-  pub void ensureCapacity (size_t capacity);
-  prv void ensureCapacityImpl (size_t wordI);
-  prv bool isWithinCapacity (size_t wordI) const noexcept;
-  pub void setCapacitatedBit (size_t i) noexcept;
+  pub void ensureWidth (size_t width);
+  prv void ensureWidthForWord (size_t wordI);
+  prv bool wordIsWithinWidth (size_t wordI) const noexcept;
+  pub void setExistingBit (size_t i) noexcept;
   pub void setBit (size_t i);
-  pub void clearCapacitatedBit (size_t i) noexcept;
+  pub void clearExistingBit (size_t i) noexcept;
   pub void clearBit (size_t i);
-  pub bool getCapacitatedBit (size_t i) const noexcept;
+  pub bool getExistingBit (size_t i) const noexcept;
   pub bool getBit (size_t i) const noexcept;
   prv template<typename _OutOfRangeResult, typename _ReadOp> size_t getNextBit (size_t i, const _OutOfRangeResult &outOfRangeResult, const _ReadOp &readOp) const noexcept;
   pub size_t getNextSetBit (size_t i) const noexcept;
   pub size_t getNextClearBit (size_t i) const noexcept;
   pub void compact ();
 
-  prv template<typename _MergeOp> static size_t op (
-    const core::string<word> &i0, size_t i0Size, const core::string<word> &i1, size_t i1Size,
+  prv template<typename _MergeOp> static void op (
+    const core::string<word> &i0, const core::string<word> &i1, size_t iSize,
     core::string<word> &r_o, _MergeOp mergeOp
   );
-  prv template<typename _MergeOp, typename _RemainderOp> static size_t op (
+  prv template<typename _MergeOp, typename _RemainderOp> static void op (
     const core::string<word> &i0, size_t i0Size, const core::string<word> &i1, size_t i1Size,
     core::string<word> &r_o, _MergeOp mergeOp, _RemainderOp remainderOp
   );
   prv static void orOp (const core::string<word> &i0, size_t i0Size, const core::string<word> &i1, size_t i1Size, core::string<word> &r_o);
-  prv static void andOp (const core::string<word> &i0, size_t i0Size, const core::string<word> &i1, size_t i1Size, core::string<word> &r_o);
+  prv static void andOp (const core::string<word> &i0, const core::string<word> &i1, size_t iSize, core::string<word> &r_o);
   pub Bitset &operator|= (Bitset &&r);
   pub Bitset &operator|= (const Bitset &r);
   friend Bitset operator| (Bitset &&l, Bitset &&r);

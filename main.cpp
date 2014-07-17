@@ -97,11 +97,13 @@ void testBitsets () {
     Bitset bitset2(Rep::VALUE_SIZE);
     for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
       if (rep.value[i]) {
-        bitset2.setCapacitatedBit(i);
+        bitset2.setExistingBit(i);
       }
     }
     check(bitsets.back(), bitset2);
   }
+  bitsets[1].setBit(Rep::VALUE_SIZE);
+  bitsets[1].clearBit(Rep::VALUE_SIZE);
 
   for (iu j = 0; j != reps.size(); ++j) {
     Rep &rep = reps[j];
@@ -113,13 +115,13 @@ void testBitsets () {
     check(0, bitset.getBit(Rep::VALUE_SIZE));
     check(0, bitset.getBit(Rep::VALUE_SIZE * 200));
 
-    bool withinCapacity = false;
+    bool withinWidth = false;
     for (iu i = Rep::VALUE_SIZE - 1; i != static_cast<iu>(0) - 1; --i) {
       if (rep.value[i]) {
-        withinCapacity = true;
+        withinWidth = true;
       }
-      if (withinCapacity) {
-        check(rep.value[i], bitset.getCapacitatedBit(i));
+      if (withinWidth) {
+        check(rep.value[i], bitset.getExistingBit(i));
       }
     }
 
@@ -152,14 +154,14 @@ void testBitsets () {
     check(bitset.getNextClearBit(lastBit) <= Rep::VALUE_SIZE);
     check(Rep::VALUE_SIZE * 200, bitset.getNextClearBit(Rep::VALUE_SIZE * 200));
 
-    for (bool assumingCapacitation : {false, true}) {
+    for (bool assumingWithinWidth : {false, true}) {
       Bitset bitset2 = bitset;
       bool exhausted = (bitset2.getNextSetBit(0) == Bitset::NON_INDEX);
       for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
         if (rep.value[i]) {
           check(false, exhausted);
-          if (assumingCapacitation) {
-            bitset2.clearCapacitatedBit(i);
+          if (assumingWithinWidth) {
+            bitset2.clearExistingBit(i);
           } else {
             bitset2.clearBit(i);
           }
