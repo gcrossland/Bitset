@@ -22,50 +22,77 @@ Bitset::Bitset () {
 }
 
 Bitset::Bitset (size_t capacity) {
-  b.reserve((capacity + BITS - 1) / BITS);
+  ensureCapacity(capacity);
 }
 
-void Bitset::ensureSize (size_t wordI) {
+void Bitset::ensureCapacity (size_t capacity) {
+  ensureCapacityImpl(capacity / BITS);
+}
+
+void Bitset::ensureCapacityImpl (size_t wordI) {
   size_t bSize = b.size();
   if (wordI >= bSize) {
     b.append(wordI + 1 - bSize, 0);
   }
 }
 
-bool Bitset::isWithinSize (size_t wordI) const noexcept {
+bool Bitset::isWithinCapacity (size_t wordI) const noexcept {
   return wordI < b.size();
+}
+
+void Bitset::setCapacitatedBit (size_t i) noexcept {
+  size_t wordI = i / BITS;
+  size_t bitI = i % BITS;
+
+  DPRE(isWithinCapacity(wordI));
+  b[wordI] |= ONE << bitI;
 }
 
 void Bitset::setBit (size_t i) {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  // XXXX make capacity ensurance user-directed? i.e. have ensureCapacityAndSetBit() to do this job? (would require getSize()...)
-  ensureSize(wordI);
+  ensureCapacityImpl(wordI);
   b[wordI] |= ONE << bitI;
+}
+
+void Bitset::clearCapacitatedBit (size_t i) noexcept {
+  size_t wordI = i / BITS;
+  size_t bitI = i % BITS;
+
+  DPRE(isWithinCapacity(wordI));
+  b[wordI] &= ~(ONE << bitI);
 }
 
 void Bitset::clearBit (size_t i) {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  if (isWithinSize(wordI)) {
+  if (isWithinCapacity(wordI)) {
     b[wordI] &= ~(ONE << bitI);
   }
+}
+
+bool Bitset::getCapacitatedBit (size_t i) const noexcept {
+  size_t wordI = i / BITS;
+  size_t bitI = i % BITS;
+
+  DPRE(isWithinCapacity(wordI));
+  return (b[wordI] >> bitI) & 0b1;
 }
 
 bool Bitset::getBit (size_t i) const noexcept {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  return isWithinSize(wordI) ? (b[wordI] >> bitI) & 0b1 : 0;
+  return isWithinCapacity(wordI) ? (b[wordI] >> bitI) & 0b1 : 0;
 }
 
 template<typename _OutOfRangeResult, typename _ReadOp> size_t Bitset::getNextBit (size_t i, const _OutOfRangeResult &outOfRangeResult, const _ReadOp &readOp) const noexcept {
   size_t wordI = i / BITS;
   size_t bitI = i % BITS;
 
-  if (!isWithinSize(wordI)) {
+  if (!isWithinCapacity(wordI)) {
     return outOfRangeResult(i);
   }
 
@@ -139,7 +166,7 @@ template<typename _MergeOp, typename _RemainderOp> size_t Bitset::op (
   const string<word> &i0, size_t i0Size, const string<word> &i1, size_t i1Size,
   string<word> &r_o, _MergeOp mergeOp, _RemainderOp remainderOp
 ) {
-  // XXXX these ops are symmetric: just require that the first one is the bigger?
+  // TODO these ops are symmetric: just require that the first one is the bigger?
   bool i0IsBigger = i0Size > i1Size;
   const string<word> &iR = i0IsBigger ? i0 : i1;
   size_t end = i0IsBigger ? i0Size : i1Size;
@@ -282,6 +309,34 @@ Bitset operator& (const Bitset &l, const Bitset &r) {
   Bitset::andOp(l.b, lSize, r.b, rSize, o.b);
 
   return o;
+}
+
+bool Bitset::operator== (const Bitset &r) const {
+  size_t lSize = b.size();
+  size_t rSize = r.b.size();
+  size_t oSize;
+  const string<word> *b;
+  if (lSize > rSize) {
+    oSize = rSize;
+    b = &this->b;
+  } else {
+    oSize = lSize;
+    b = &r.b;
+  }
+
+  if (this->b.compare(0, oSize, r.b, 0, oSize) != 0) {
+    return false;
+  }
+  for (const word *i = b->data() + oSize, *end = b->data() + b->size(); i != end ; ++i) {
+    if (*i != 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Bitset::operator!= (const Bitset &r) const {
+  return !(*this == r);
 }
 
 /* -----------------------------------------------------------------------------

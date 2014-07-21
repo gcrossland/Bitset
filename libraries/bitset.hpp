@@ -31,12 +31,14 @@ class Bitset {
   pub Bitset (Bitset &&) = default;
   pub Bitset &operator= (Bitset &&) = default;
 
-  prv void ensureSize (size_t wordI);
-  prv bool isWithinSize (size_t wordI) const noexcept;
-  // XXXX just have references to pseudo-bools? iterators?
-  // XXXX variants to set/clear ranges?
+  pub void ensureCapacity (size_t capacity);
+  prv void ensureCapacityImpl (size_t wordI);
+  prv bool isWithinCapacity (size_t wordI) const noexcept;
+  pub void setCapacitatedBit (size_t i) noexcept;
   pub void setBit (size_t i);
+  pub void clearCapacitatedBit (size_t i) noexcept;
   pub void clearBit (size_t i);
+  pub bool getCapacitatedBit (size_t i) const noexcept;
   pub bool getBit (size_t i) const noexcept;
   prv template<typename _OutOfRangeResult, typename _ReadOp> size_t getNextBit (size_t i, const _OutOfRangeResult &outOfRangeResult, const _ReadOp &readOp) const noexcept;
   pub size_t getNextSetBit (size_t i) const noexcept;
@@ -65,6 +67,8 @@ class Bitset {
   friend Bitset operator& (Bitset &&l, const Bitset &r);
   friend Bitset operator& (const Bitset &l, Bitset &&r);
   friend Bitset operator& (const Bitset &l, const Bitset &r);
+  pub bool operator== (const Bitset &r) const;
+  pub bool operator!= (const Bitset &r) const;
 };
 
 /* -----------------------------------------------------------------------------

@@ -13,6 +13,10 @@ using core::check;
 DC();
 
 int main (int argc, char *argv[]) {
+  /*std::shared_ptr<core::debug::Stream> errs(new core::debug::Stream());
+  DOPEN(, errs);
+  bitset::DOPEN(, errs);*/
+
   testBitsets();
 
   return 0;
@@ -38,19 +42,6 @@ struct Rep {
 
     copy(o.value, o.value + VALUE_SIZE, value);
     return *this;
-  }
-
-  // XXXX
-  pub bool isSane () {
-    for (iu i = 0; i != VALUE_SIZE; ++i) {
-      if ((i == 0 || i == 1 || i == 30 || i == 31 || i == 32 || i == 33 || i == 62 || i == 63 || i == 64 || i == 65 || i == 94 || i == 95)) {
-        continue;
-      }
-      if (value[i] != 0) {
-        return false;
-      }
-    }
-    return true;
   }
 };
 
@@ -102,6 +93,14 @@ void testBitsets () {
       }
     }
     bitsets.emplace_back(move(bitset));
+
+    Bitset bitset2(Rep::VALUE_SIZE);
+    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+      if (rep.value[i]) {
+        bitset2.setCapacitatedBit(i);
+      }
+    }
+    check(bitsets.back(), bitset2);
   }
 
   for (iu j = 0; j != reps.size(); ++j) {
@@ -114,19 +113,36 @@ void testBitsets () {
     check(0, bitset.getBit(Rep::VALUE_SIZE));
     check(0, bitset.getBit(Rep::VALUE_SIZE * 200));
 
+    bool withinCapacity = false;
+    for (iu i = Rep::VALUE_SIZE - 1; i != static_cast<iu>(0) - 1; --i) {
+      if (rep.value[i]) {
+        withinCapacity = true;
+      }
+      if (withinCapacity) {
+        check(rep.value[i], bitset.getCapacitatedBit(i));
+      }
+    }
+
     size_t lastBit = 0;
     for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
       if (rep.value[i]) {
+        for (iu j = lastBit; j <= i; ++j) {
+          check(i, bitset.getNextSetBit(j));
+        }
         lastBit = bitset.getNextSetBit(lastBit);
         check(i, lastBit);
         ++lastBit;
       }
     }
     check(Bitset::NON_INDEX, bitset.getNextSetBit(lastBit));
+    check(Bitset::NON_INDEX, bitset.getNextSetBit(Rep::VALUE_SIZE * 200));
 
     lastBit = 0;
     for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
       if (!rep.value[i]) {
+        for (iu j = lastBit; j <= i; ++j) {
+          check(i, bitset.getNextClearBit(j));
+        }
         lastBit = bitset.getNextClearBit(lastBit);
         check(i, lastBit);
         ++lastBit;
@@ -134,19 +150,26 @@ void testBitsets () {
     }
     check(bitset.getNextClearBit(lastBit) >= lastBit);
     check(bitset.getNextClearBit(lastBit) <= Rep::VALUE_SIZE);
+    check(Rep::VALUE_SIZE * 200, bitset.getNextClearBit(Rep::VALUE_SIZE * 200));
 
-    Bitset bitset2 = bitset;
-    bool exhausted = (bitset2.getNextSetBit(0) == Bitset::NON_INDEX);
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
-      if (rep.value[i]) {
-        check(false, exhausted);
-        bitset2.clearBit(i);
-        if (bitset2.getNextSetBit(i + 1) == Bitset::NON_INDEX) {
-          exhausted = true;
+    for (bool assumingCapacitation : {false, true}) {
+      Bitset bitset2 = bitset;
+      bool exhausted = (bitset2.getNextSetBit(0) == Bitset::NON_INDEX);
+      for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+        if (rep.value[i]) {
+          check(false, exhausted);
+          if (assumingCapacitation) {
+            bitset2.clearCapacitatedBit(i);
+          } else {
+            bitset2.clearBit(i);
+          }
+          if (bitset2.getNextSetBit(i + 1) == Bitset::NON_INDEX) {
+            exhausted = true;
+          }
         }
       }
+      check(true, exhausted);
     }
-    check(true, exhausted);
   }
 
   auto checkOr = [] (const Rep &r0, const Rep &r1, const Bitset &res) {
@@ -195,6 +218,8 @@ void testBitsets () {
       checkAnd(rep0, rep1, Bitset(bitset0) & bitset1);
       checkAnd(rep0, rep1, bitset0 & Bitset(bitset1));
       checkAnd(rep0, rep1, Bitset(bitset0) & Bitset(bitset1));
+
+      check(j == k, bitset0 == bitset1);
     }
   }
 }
