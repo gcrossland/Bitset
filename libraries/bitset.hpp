@@ -44,6 +44,7 @@ class Bitset {
   prv template<typename _OutOfRangeResult, typename _ReadOp> size_t getNextBit (size_t i, const _OutOfRangeResult &outOfRangeResult, const _ReadOp &readOp) const noexcept;
   pub size_t getNextSetBit (size_t i) const noexcept;
   pub size_t getNextClearBit (size_t i) const noexcept;
+  pub void clear () noexcept;
   pub void compact ();
 
   prv template<typename _MergeOp> static void op (

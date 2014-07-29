@@ -142,6 +142,10 @@ size_t Bitset::getNextClearBit (size_t i) const noexcept {
   });
 }
 
+void Bitset::clear () noexcept {
+  b.clear();
+}
+
 void Bitset::compact () {
   for (size_t i = b.size() - 1; i != static_cast<size_t>(-1); --i) {
     if (b[i] != 0) {

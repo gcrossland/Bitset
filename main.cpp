@@ -102,6 +102,8 @@ void testBitsets () {
     }
     check(bitsets.back(), bitset2);
   }
+  bitsets[0].setBit(32);
+  bitsets[0].clear();
   bitsets[1].setBit(Rep::VALUE_SIZE);
   bitsets[1].clearBit(Rep::VALUE_SIZE);
 
