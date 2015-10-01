@@ -1,5 +1,6 @@
 #include "header.hpp"
 #include <vector>
+#include <algorithm>
 
 using std::fill;
 using std::copy;
@@ -7,6 +8,7 @@ using std::vector;
 using bitset::Bitset;
 using std::move;
 using core::check;
+using std::all_of;
 
 /* -----------------------------------------------------------------------------
 ----------------------------------------------------------------------------- */
@@ -42,6 +44,12 @@ struct Rep {
 
     copy(o.value, o.value + VALUE_SIZE, value);
     return *this;
+  }
+
+  pub bool empty () const {
+    return all_of(value, value + VALUE_SIZE, [] (const bool &o) -> bool {
+      return !o;
+    });
   }
 };
 
@@ -87,23 +95,29 @@ void testBitsets () {
   vector<Bitset> bitsets;
   for (Rep &rep : reps) {
     Bitset bitset;
+    check(bitset.empty());
     for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
       if (rep.value[i]) {
         bitset.setBit(i);
       }
     }
+    check(rep.empty(), bitset.empty());
     bitsets.emplace_back(move(bitset));
 
     Bitset bitset2(Rep::VALUE_SIZE);
+    check(bitset2.empty());
     for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
       if (rep.value[i]) {
         bitset2.setExistingBit(i);
       }
     }
+    check(rep.empty(), bitset2.empty());
     check(bitsets.back(), bitset2);
   }
   bitsets[0].setBit(32);
+  check(!bitsets[0].empty());
   bitsets[0].clear();
+  check(bitsets[0].empty());
   bitsets[1].setBit(Rep::VALUE_SIZE);
   bitsets[1].clearBit(Rep::VALUE_SIZE);
 

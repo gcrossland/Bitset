@@ -146,6 +146,15 @@ void Bitset::clear () noexcept {
   b.clear();
 }
 
+bool Bitset::empty () const noexcept {
+  for (const word &w : b) {
+    if (w != 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void Bitset::compact () {
   for (size_t i = b.size() - 1; i != static_cast<size_t>(-1); --i) {
     if (b[i] != 0) {

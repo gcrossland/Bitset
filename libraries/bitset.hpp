@@ -1,7 +1,7 @@
 /** @file */
 /* -----------------------------------------------------------------------------
    Bitset Library
-   © Geoff Crossland 2013, 2014
+   © Geoff Crossland 2013-2015
 ----------------------------------------------------------------------------- */
 #ifndef BITSET_ALREADYINCLUDED
 #define BITSET_ALREADYINCLUDED
@@ -45,6 +45,7 @@ class Bitset {
   pub size_t getNextSetBit (size_t i) const noexcept;
   pub size_t getNextClearBit (size_t i) const noexcept;
   pub void clear () noexcept;
+  pub bool empty () const noexcept;
   pub void compact ();
 
   prv template<typename _MergeOp> static void op (
