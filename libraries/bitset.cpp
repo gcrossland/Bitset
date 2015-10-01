@@ -207,6 +207,16 @@ void Bitset::andOp (const string<word> &i0, const string<word> &i1, size_t iSize
   });
 }
 
+void Bitset::andNotOp (const string<word> &i0, size_t i0Size, const string<word> &i1, size_t i1Size, string<word> &r_o) {
+  DPRE(i0Size >= i1Size);
+  DPRE(r_o.size() == i0Size);
+  Bitset::op(i0, i0Size, i1, i1Size, r_o, [] (word v0, word v1) -> word {
+    return v0 & ~v1;
+  }, [] (word o) -> word {
+    return o;
+  });
+}
+
 Bitset &Bitset::operator|= (Bitset &&r) {
   *this = move(*this) | move(r);
   return *this;
@@ -336,6 +346,23 @@ Bitset operator& (const Bitset &l, const Bitset &r) {
   Bitset o(oSize, false);
 
   Bitset::andOp(l.b, r.b, oSize, o.b);
+
+  return o;
+}
+
+Bitset &Bitset::andNot (const Bitset &r) {
+  *this = andNot(move(*this), r);
+  return *this;
+}
+
+Bitset Bitset::andNot (Bitset &&l, const Bitset &r) {
+  size_t lSize = l.b.size();
+  size_t rSize = r.b.size();
+
+  size_t oSize = min(lSize, rSize);
+  Bitset o(move(l));
+
+  Bitset::andNotOp(o.b, lSize, r.b, oSize, o.b);
 
   return o;
 }

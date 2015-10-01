@@ -200,6 +200,11 @@ void testBitsets () {
       check(r0.value[i] & r1.value[i], res.getBit(i));
     }
   };
+  auto checkAndNot = [] (const Rep &r0, const Rep &r1, const Bitset &res) {
+    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+      check(r0.value[i] & ~r1.value[i], res.getBit(i));
+    }
+  };
   for (iu j = 0; j != reps.size(); ++j) {
     Rep &rep0 = reps[j];
     Bitset &bitset0 = bitsets[j];
@@ -236,6 +241,17 @@ void testBitsets () {
       checkAnd(rep0, rep1, Bitset(bitset0) & bitset1);
       checkAnd(rep0, rep1, bitset0 & Bitset(bitset1));
       checkAnd(rep0, rep1, Bitset(bitset0) & Bitset(bitset1));
+
+      {
+        Bitset b = bitset0;
+        b.andNot(bitset1);
+        checkAndNot(rep0, rep1, b);
+      }
+      {
+        Bitset b = bitset0;
+        b.andNot(Bitset(bitset1));
+        checkAndNot(rep0, rep1, b);
+      }
 
       check(j == k, bitset0 == bitset1);
     }

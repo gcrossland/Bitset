@@ -58,6 +58,7 @@ class Bitset {
   );
   prv static void orOp (const core::string<word> &i0, size_t i0Size, const core::string<word> &i1, size_t i1Size, core::string<word> &r_o);
   prv static void andOp (const core::string<word> &i0, const core::string<word> &i1, size_t iSize, core::string<word> &r_o);
+  prv static void andNotOp (const core::string<word> &i0, size_t i0Size, const core::string<word> &i1, size_t i1Size, core::string<word> &r_o);
   pub Bitset &operator|= (Bitset &&r);
   pub Bitset &operator|= (const Bitset &r);
   friend Bitset operator| (Bitset &&l, Bitset &&r);
@@ -70,6 +71,8 @@ class Bitset {
   friend Bitset operator& (Bitset &&l, const Bitset &r);
   friend Bitset operator& (const Bitset &l, Bitset &&r);
   friend Bitset operator& (const Bitset &l, const Bitset &r);
+  pub Bitset &andNot (const Bitset &r);
+  prv static Bitset andNot (Bitset &&l, const Bitset &r);
   pub bool operator== (const Bitset &r) const;
   pub bool operator!= (const Bitset &r) const;
 };
