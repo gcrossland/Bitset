@@ -1,8 +1,8 @@
 #include "bitset.hpp"
 
-namespace bitset {
+LIB_DEPENDENCIES
 
-const core::Version VERSION{LIB_MAJ, LIB_MIN}; DEPENDENCIES;
+namespace bitset {
 
 using core::getLowestSetBit;
 using core::string;
