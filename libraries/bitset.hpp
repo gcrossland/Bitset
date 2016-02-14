@@ -25,10 +25,6 @@ class Bitset {
   pub Bitset ();
   pub explicit Bitset (size_t width);
   prv Bitset (size_t size, bool);
-  pub Bitset (const Bitset &) = default;
-  pub Bitset &operator= (const Bitset &) = default;
-  pub Bitset (Bitset &&) = default;
-  pub Bitset &operator= (Bitset &&) = default;
 
   pub void ensureWidth (size_t width);
   prv void ensureWidthForWord (size_t wordI);
