@@ -252,6 +252,10 @@ void testBitsets () {
         b.andNot(Bitset(bitset1));
         checkAndNot(rep0, rep1, b);
       }
+      checkAndNot(rep0, rep1, Bitset::andNot(bitset0, bitset1));
+      checkAndNot(rep0, rep1, Bitset::andNot(Bitset(bitset0), bitset1));
+      checkAndNot(rep0, rep1, Bitset::andNot(bitset0, Bitset(bitset1)));
+      checkAndNot(rep0, rep1, Bitset::andNot(Bitset(bitset0), Bitset(bitset1)));
 
       check(j == k, bitset0 == bitset1);
     }

@@ -1,7 +1,7 @@
 /** @file */
 /* -----------------------------------------------------------------------------
    Bitset Library
-   © Geoff Crossland 2013-2015
+   © Geoff Crossland 2013-2017
 ----------------------------------------------------------------------------- */
 #ifndef BITSET_ALREADYINCLUDED
 #define BITSET_ALREADYINCLUDED
@@ -65,8 +65,12 @@ class Bitset {
   friend Bitset operator& (Bitset &&l, const Bitset &r);
   friend Bitset operator& (const Bitset &l, Bitset &&r);
   friend Bitset operator& (const Bitset &l, const Bitset &r);
+  pub Bitset &andNot (Bitset &&r);
   pub Bitset &andNot (const Bitset &r);
-  prv static Bitset andNot (Bitset &&l, const Bitset &r);
+  pub static Bitset andNot (Bitset &&l, Bitset &&r);
+  pub static Bitset andNot (Bitset &&l, const Bitset &r);
+  pub static Bitset andNot (const Bitset &l, Bitset &&r);
+  pub static Bitset andNot (const Bitset &l, const Bitset &r);
   pub bool operator== (const Bitset &r) const;
   pub bool operator!= (const Bitset &r) const;
 };

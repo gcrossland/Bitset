@@ -158,7 +158,7 @@ bool Bitset::empty () const noexcept {
 void Bitset::compact () {
   for (size_t i = b.size() - 1; i != static_cast<size_t>(-1); --i) {
     if (b[i] != 0) {
-      b.resize(i + 1);
+      b.erase(i + 1);
       break;
     }
   }
@@ -326,7 +326,7 @@ Bitset operator& (Bitset &&l, const Bitset &r) {
     oSize = lSize;
   } else {
     oSize = rSize;
-    o.b.resize_any(oSize);
+    o.b.erase(oSize);
   }
 
   Bitset::andOp(o.b, r.b, oSize, o.b);
@@ -350,9 +350,18 @@ Bitset operator& (const Bitset &l, const Bitset &r) {
   return o;
 }
 
+Bitset &Bitset::andNot (Bitset &&r) {
+  *this = andNot(move(*this), move(r));
+  return *this;
+}
+
 Bitset &Bitset::andNot (const Bitset &r) {
   *this = andNot(move(*this), r);
   return *this;
+}
+
+Bitset Bitset::andNot (Bitset &&l, Bitset &&r) {
+  return andNot(move(l), r);
 }
 
 Bitset Bitset::andNot (Bitset &&l, const Bitset &r) {
@@ -363,6 +372,46 @@ Bitset Bitset::andNot (Bitset &&l, const Bitset &r) {
   Bitset o(move(l));
 
   Bitset::andNotOp(o.b, lSize, r.b, oSize, o.b);
+
+  return o;
+}
+
+Bitset Bitset::andNot (const Bitset &l, Bitset &&r) {
+  size_t lSize = l.b.size();
+  size_t rSize = r.b.size();
+
+  if (r.b.capacity() < lSize) {
+    DA(rSize < lSize);
+    Bitset o(lSize, false);
+
+    Bitset::andNotOp(l.b, lSize, r.b, rSize, o.b);
+
+    return o;
+  } else {
+    Bitset o(move(r));
+    size_t oSize;
+    if (rSize < lSize) {
+      o.b.append_any(lSize - rSize);
+      oSize = rSize;
+    } else {
+      oSize = lSize;
+      o.b.erase(oSize);
+    }
+
+    Bitset::andNotOp(l.b, lSize, o.b, oSize, o.b);
+
+    return o;
+  }
+}
+
+Bitset Bitset::andNot (const Bitset &l, const Bitset &r) {
+  size_t lSize = l.b.size();
+  size_t rSize = r.b.size();
+
+  size_t oSize = min(lSize, rSize);
+  Bitset o(lSize, false);
+
+  Bitset::andNotOp(l.b, lSize, r.b, oSize, o.b);
 
   return o;
 }
