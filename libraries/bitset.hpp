@@ -1,7 +1,7 @@
 /** @file */
 /* -----------------------------------------------------------------------------
    Bitset Library
-   © Geoff Crossland 2013-2017
+   © Geoff Crossland 2013-2022
 ----------------------------------------------------------------------------- */
 #ifndef BITSET_ALREADYINCLUDED
 #define BITSET_ALREADYINCLUDED
