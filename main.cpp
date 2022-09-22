@@ -25,16 +25,16 @@ int main (int argc, char *argv[]) {
 }
 
 struct Rep {
-  static const size_t VALUE_SIZE = 96;
+  static const size_t valueSize = 96;
 
-  bool value[VALUE_SIZE];
+  bool value[valueSize];
 
   pub Rep () {
-    fill(value, value + VALUE_SIZE, 0);
+    fill(value, value + valueSize, 0);
   }
 
   pub Rep (const Rep &o) {
-    copy(o.value, o.value + VALUE_SIZE, value);
+    copy(o.value, o.value + valueSize, value);
   }
 
   pub Rep &operator= (const Rep &o) {
@@ -42,18 +42,18 @@ struct Rep {
       return *this;
     }
 
-    copy(o.value, o.value + VALUE_SIZE, value);
+    copy(o.value, o.value + valueSize, value);
     return *this;
   }
 
   pub bool empty () const {
-    return all_of(value, value + VALUE_SIZE, [] (const bool &o) -> bool {
+    return all_of(value, value + valueSize, [] (const bool &o) -> bool {
       return !o;
     });
   }
 };
 
-static const iu INDEX_MAP[] = {
+static const iu indexMap[] = {
   0, 1, 30, 31, 32, 33, 62, 63, 64, 65, 94, 95
 };
 
@@ -69,9 +69,9 @@ void createBitsetsImpl (
   }
 
   for (iu i = bitIndexBegin; i != bitIndexEnd; ++i) {
-    r_rep.value[INDEX_MAP[i]] = 1;
+    r_rep.value[indexMap[i]] = 1;
     createBitsetsImpl(nextBitId + 1, maxBitIds, r_rep, i + 1, bitIndexEnd, r_reps);
-    r_rep.value[INDEX_MAP[i]] = 0;
+    r_rep.value[indexMap[i]] = 0;
   }
 }
 
@@ -80,7 +80,7 @@ vector<Rep> createBitsets (iu cardinalityBegin, iu cardinalityEnd) {
 
   Rep rep;
   for (iu i = cardinalityBegin; i != cardinalityEnd; ++i) {
-    createBitsetsImpl(0, i, rep, 0, sizeof(INDEX_MAP) / sizeof(*INDEX_MAP), reps);
+    createBitsetsImpl(0, i, rep, 0, sizeof(indexMap) / sizeof(*indexMap), reps);
   }
 
   return reps;
@@ -96,7 +96,7 @@ void testBitsets () {
   for (Rep &rep : reps) {
     Bitset bitset;
     check(bitset.empty());
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       if (rep.value[i]) {
         bitset.setBit(i);
       }
@@ -104,9 +104,9 @@ void testBitsets () {
     check(rep.empty(), bitset.empty());
     bitsets.emplace_back(move(bitset));
 
-    Bitset bitset2(Rep::VALUE_SIZE);
+    Bitset bitset2(Rep::valueSize);
     check(bitset2.empty());
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       if (rep.value[i]) {
         bitset2.setExistingBit(i);
       }
@@ -118,21 +118,21 @@ void testBitsets () {
   check(!bitsets[0].empty());
   bitsets[0].clear();
   check(bitsets[0].empty());
-  bitsets[1].setBit(Rep::VALUE_SIZE);
-  bitsets[1].clearBit(Rep::VALUE_SIZE);
+  bitsets[1].setBit(Rep::valueSize);
+  bitsets[1].clearBit(Rep::valueSize);
 
   for (iu j = 0; j != reps.size(); ++j) {
     Rep &rep = reps[j];
     Bitset &bitset = bitsets[j];
 
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       check(rep.value[i], bitset.getBit(i));
     }
-    check(0, bitset.getBit(Rep::VALUE_SIZE));
-    check(0, bitset.getBit(Rep::VALUE_SIZE * 200));
+    check(0, bitset.getBit(Rep::valueSize));
+    check(0, bitset.getBit(Rep::valueSize * 200));
 
     bool withinWidth = false;
-    for (iu i = Rep::VALUE_SIZE - 1; i != static_cast<iu>(0) - 1; --i) {
+    for (iu i = Rep::valueSize - 1; i != static_cast<iu>(0) - 1; --i) {
       if (rep.value[i]) {
         withinWidth = true;
       }
@@ -142,7 +142,7 @@ void testBitsets () {
     }
 
     size_t lastBit = 0;
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       if (rep.value[i]) {
         for (iu j = lastBit; j <= i; ++j) {
           check(i, bitset.getNextSetBit(j));
@@ -152,11 +152,11 @@ void testBitsets () {
         ++lastBit;
       }
     }
-    check(Bitset::NON_INDEX, bitset.getNextSetBit(lastBit));
-    check(Bitset::NON_INDEX, bitset.getNextSetBit(Rep::VALUE_SIZE * 200));
+    check(Bitset::nonIndex, bitset.getNextSetBit(lastBit));
+    check(Bitset::nonIndex, bitset.getNextSetBit(Rep::valueSize * 200));
 
     lastBit = 0;
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       if (!rep.value[i]) {
         for (iu j = lastBit; j <= i; ++j) {
           check(i, bitset.getNextClearBit(j));
@@ -167,13 +167,13 @@ void testBitsets () {
       }
     }
     check(bitset.getNextClearBit(lastBit) >= lastBit);
-    check(bitset.getNextClearBit(lastBit) <= Rep::VALUE_SIZE);
-    check(Rep::VALUE_SIZE * 200, bitset.getNextClearBit(Rep::VALUE_SIZE * 200));
+    check(bitset.getNextClearBit(lastBit) <= Rep::valueSize);
+    check(Rep::valueSize * 200, bitset.getNextClearBit(Rep::valueSize * 200));
 
     for (bool assumingWithinWidth : {false, true}) {
       Bitset bitset2 = bitset;
-      bool exhausted = (bitset2.getNextSetBit(0) == Bitset::NON_INDEX);
-      for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+      bool exhausted = (bitset2.getNextSetBit(0) == Bitset::nonIndex);
+      for (iu i = 0; i != Rep::valueSize; ++i) {
         if (rep.value[i]) {
           check(false, exhausted);
           if (assumingWithinWidth) {
@@ -181,7 +181,7 @@ void testBitsets () {
           } else {
             bitset2.clearBit(i);
           }
-          if (bitset2.getNextSetBit(i + 1) == Bitset::NON_INDEX) {
+          if (bitset2.getNextSetBit(i + 1) == Bitset::nonIndex) {
             exhausted = true;
           }
         }
@@ -191,17 +191,17 @@ void testBitsets () {
   }
 
   auto checkOr = [] (const Rep &r0, const Rep &r1, const Bitset &res) {
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       check(r0.value[i] | r1.value[i], res.getBit(i));
     }
   };
   auto checkAnd = [] (const Rep &r0, const Rep &r1, const Bitset &res) {
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       check(r0.value[i] & r1.value[i], res.getBit(i));
     }
   };
   auto checkAndNot = [] (const Rep &r0, const Rep &r1, const Bitset &res) {
-    for (iu i = 0; i != Rep::VALUE_SIZE; ++i) {
+    for (iu i = 0; i != Rep::valueSize; ++i) {
       check(r0.value[i] & ~r1.value[i], res.getBit(i));
     }
   };

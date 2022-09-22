@@ -13,14 +13,14 @@ using std::min;
 ----------------------------------------------------------------------------- */
 DC();
 
-constexpr size_t Bitset::BITS;
-constexpr Bitset::word Bitset::ONE;
-constexpr size_t Bitset::NON_INDEX;
+constexpr size_t Bitset::bits;
+constexpr Bitset::word Bitset::one;
+constexpr size_t Bitset::nonIndex;
 
 Bitset::Bitset () {
 }
 
-Bitset::Bitset (size_t width) : b((width + (BITS - 1)) / BITS) {
+Bitset::Bitset (size_t width) : b((width + (bits - 1)) / bits) {
   ensureWidth(width);
 }
 
@@ -30,7 +30,7 @@ Bitset::Bitset (size_t size, bool) : b(size) {
 
 void Bitset::ensureWidth (size_t width) {
   if (width != 0) {
-    ensureWidthForWord((width - 1) / BITS);
+    ensureWidthForWord((width - 1) / bits);
   }
 }
 
@@ -46,56 +46,56 @@ bool Bitset::wordIsWithinWidth (size_t wordI) const noexcept {
 }
 
 void Bitset::setExistingBit (size_t i) noexcept {
-  size_t wordI = i / BITS;
-  size_t bitI = i % BITS;
+  size_t wordI = i / bits;
+  size_t bitI = i % bits;
 
   DPRE(wordIsWithinWidth(wordI));
-  b[wordI] |= ONE << bitI;
+  b[wordI] |= one << bitI;
 }
 
 void Bitset::setBit (size_t i) {
-  size_t wordI = i / BITS;
-  size_t bitI = i % BITS;
+  size_t wordI = i / bits;
+  size_t bitI = i % bits;
 
   ensureWidthForWord(wordI);
-  b[wordI] |= ONE << bitI;
+  b[wordI] |= one << bitI;
 }
 
 void Bitset::clearExistingBit (size_t i) noexcept {
-  size_t wordI = i / BITS;
-  size_t bitI = i % BITS;
+  size_t wordI = i / bits;
+  size_t bitI = i % bits;
 
   DPRE(wordIsWithinWidth(wordI));
-  b[wordI] &= ~(ONE << bitI);
+  b[wordI] &= ~(one << bitI);
 }
 
 void Bitset::clearBit (size_t i) {
-  size_t wordI = i / BITS;
-  size_t bitI = i % BITS;
+  size_t wordI = i / bits;
+  size_t bitI = i % bits;
 
   if (wordIsWithinWidth(wordI)) {
-    b[wordI] &= ~(ONE << bitI);
+    b[wordI] &= ~(one << bitI);
   }
 }
 
 bool Bitset::getExistingBit (size_t i) const noexcept {
-  size_t wordI = i / BITS;
-  size_t bitI = i % BITS;
+  size_t wordI = i / bits;
+  size_t bitI = i % bits;
 
   DPRE(wordIsWithinWidth(wordI));
   return (b[wordI] >> bitI) & 0b1;
 }
 
 bool Bitset::getBit (size_t i) const noexcept {
-  size_t wordI = i / BITS;
-  size_t bitI = i % BITS;
+  size_t wordI = i / bits;
+  size_t bitI = i % bits;
 
   return wordIsWithinWidth(wordI) ? (b[wordI] >> bitI) & 0b1 : 0;
 }
 
 template<typename _OutOfRangeResult, typename _ReadOp> size_t Bitset::getNextBit (size_t i, const _OutOfRangeResult &outOfRangeResult, const _ReadOp &readOp) const noexcept {
-  size_t wordI = i / BITS;
-  size_t bitI = i % BITS;
+  size_t wordI = i / bits;
+  size_t bitI = i % bits;
 
   if (!wordIsWithinWidth(wordI)) {
     return outOfRangeResult(i);
@@ -104,7 +104,7 @@ template<typename _OutOfRangeResult, typename _ReadOp> size_t Bitset::getNextBit
   // Check for a bit in the remainder of the word.
   word remainder = readOp(b[wordI]) >> bitI;
   iu lowI = getLowestSetBit(remainder);
-  if (lowI < BITS) {
+  if (lowI < bits) {
     return i + lowI;
   }
 
@@ -117,18 +117,18 @@ template<typename _OutOfRangeResult, typename _ReadOp> size_t Bitset::getNextBit
     if (remainder != 0) {
       // Get the bit out of it (since there is one).
       lowI = getLowestSetBit(remainder);
-      DA(lowI < BITS);
-      return begin * BITS + lowI;
+      DA(lowI < bits);
+      return begin * bits + lowI;
     }
   }
 
   DA(end == begin);
-  return outOfRangeResult(end * BITS);
+  return outOfRangeResult(end * bits);
 }
 
 size_t Bitset::getNextSetBit (size_t i) const noexcept {
   return this->getNextBit(i, [] (size_t i) -> size_t {
-    return NON_INDEX;
+    return nonIndex;
   }, [] (word w) -> word {
     return w;
   });

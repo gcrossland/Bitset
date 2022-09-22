@@ -16,9 +16,9 @@ extern DC();
 
 class Bitset {
   prv typedef iu word;
-  prv static constexpr size_t BITS = core::numeric_limits<word>::bits;
-  prv static constexpr word ONE = 1;
-  pub static constexpr size_t NON_INDEX = core::numeric_limits<size_t>::max();
+  prv static constexpr size_t bits = core::numeric_limits<word>::bits;
+  prv static constexpr word one = 1;
+  pub static constexpr size_t nonIndex = core::numeric_limits<size_t>::max();
 
   prv core::string<word> b;
 
